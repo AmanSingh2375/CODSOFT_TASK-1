@@ -1,0 +1,6 @@
+{
+  "name": "EduManage - Student Management System",
+  "description": "Full-stack centralized education management platform for administrators, teachers, and students to manage academics, attendance, examinations, fees, timetable, and announcements.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
