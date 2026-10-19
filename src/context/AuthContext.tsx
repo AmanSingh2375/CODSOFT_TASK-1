@@ -1,86 +1,117 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, UserRole } from '../types/index.ts';
-import { api, setToken, removeToken, getToken } from '../lib/api.ts';
+import { User } from '../types';
+import { api, getStoredToken } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (studentData: any) => Promise<User>;
+  token: string | null;
+  isLoading: boolean;
+  login: (identifier: string, pass: string) => Promise<void>;
+  register: (data: {
+    username: string;
+    email: string;
+    password: string;
+    full_name: string;
+    student_id?: string;
+    department?: string;
+    semester?: string;
+  }) => Promise<void>;
   logout: () => void;
-  quickLogin: (role: UserRole) => Promise<User>;
   refreshUser: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const refreshUser = async () => {
-    const token = getToken();
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-    try {
-      const res = await api.get<{ user: User }>('/auth/me');
-      setUser(res.user);
-    } catch (err) {
-      console.warn('Session expired or invalid token');
-      removeToken();
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [token, setToken] = useState<string | null>(getStoredToken());
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    refreshUser();
+    async function loadUser() {
+      const stored = getStoredToken();
+      if (!stored) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const currentUser = await api.getMe();
+        setUser(currentUser);
+        setToken(stored);
+      } catch (err) {
+        console.warn('Session expired or invalid token:', err);
+        api.logout();
+        setUser(null);
+        setToken(null);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadUser();
   }, []);
 
-  const login = async (email: string, password: string): Promise<User> => {
-    const res = await api.post<{ token: string; user: User }>('/auth/login', {
-      email,
-      password,
-    });
-    setToken(res.token);
-    setUser(res.user);
-    return res.user;
+  const login = async (identifier: string, pass: string) => {
+    setIsLoading(true);
+    try {
+      const res = await api.login(identifier, pass);
+      setUser(res.user);
+      setToken(res.token);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const register = async (studentData: any): Promise<User> => {
-    const res = await api.post<{ token: string; user: User }>('/auth/register', studentData);
-    setToken(res.token);
-    setUser(res.user);
-    return res.user;
+  const register = async (data: {
+    username: string;
+    email: string;
+    password: string;
+    full_name: string;
+    student_id?: string;
+    department?: string;
+    semester?: string;
+  }) => {
+    setIsLoading(true);
+    try {
+      const res = await api.register(data);
+      setUser(res.user);
+      setToken(res.token);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {
-    removeToken();
+    api.logout();
     setUser(null);
+    setToken(null);
   };
 
-  const quickLogin = async (role: UserRole): Promise<User> => {
-    let email = 'admin@edumanage.edu';
-    if (role === 'teacher') email = 'dr.sharma@edumanage.edu';
-    if (role === 'student') email = 'arav.sharma@student.edu';
+  const refreshUser = async () => {
+    try {
+      const currentUser = await api.getMe();
+      setUser(currentUser);
+    } catch (e) {
+      console.warn('Failed to refresh user:', e);
+    }
+  };
 
-    return await login(email, 'password123');
+  const updateProfile = async (data: Partial<User>) => {
+    const updated = await api.updateProfile(data);
+    setUser(updated);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        loading,
+        token,
+        isLoading,
         login,
         register,
         logout,
-        quickLogin,
         refreshUser,
+        updateProfile,
       }}
     >
       {children}

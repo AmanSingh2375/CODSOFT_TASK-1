@@ -1,89 +1,100 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext.tsx';
-import { AppLayout } from './components/layout/AppLayout.tsx';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-// Public pages
-import { LandingPage } from './pages/LandingPage.tsx';
-import { LoginPage } from './pages/auth/LoginPage.tsx';
-import { RegisterPage } from './pages/auth/RegisterPage.tsx';
+import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { Navbar } from './components/Navbar';
+import { Sidebar } from './components/Sidebar';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { CoursesPage } from './pages/CoursesPage';
+import { GradesPage } from './pages/GradesPage';
+import { AttendancePage } from './pages/AttendancePage';
+import { AssignmentsPage } from './pages/AssignmentsPage';
+import { AnnouncementsPage } from './pages/AnnouncementsPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { SystemDiagnosticsPage } from './pages/SystemDiagnosticsPage';
+import { RefreshCw } from 'lucide-react';
 
-// Admin pages
-import { AdminDashboard } from './pages/admin/AdminDashboard.tsx';
-import { AdminStudents } from './pages/admin/AdminStudents.tsx';
-import { AdminTeachers } from './pages/admin/AdminTeachers.tsx';
-import { AdminAttendance } from './pages/admin/AdminAttendance.tsx';
-import { AdminExams } from './pages/admin/AdminExams.tsx';
-import { AdminMarks } from './pages/admin/AdminMarks.tsx';
-import { AdminFees } from './pages/admin/AdminFees.tsx';
-import { AdminTimetable } from './pages/admin/AdminTimetable.tsx';
-import { AdminAnnouncements } from './pages/admin/AdminAnnouncements.tsx';
+function MainApp() {
+  const { user, isLoading } = useAuth();
+  const [currentPage, setCurrentPage] = useState<string>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [authView, setAuthView] = useState<'login' | 'register'>('login');
 
-// Teacher pages
-import { TeacherDashboard } from './pages/teacher/TeacherDashboard.tsx';
-import { TeacherStudents } from './pages/teacher/TeacherStudents.tsx';
-import { TeacherAttendance } from './pages/teacher/TeacherAttendance.tsx';
-import { TeacherMarks } from './pages/teacher/TeacherMarks.tsx';
-import { TeacherTimetable } from './pages/teacher/TeacherTimetable.tsx';
-import { TeacherAnnouncements } from './pages/teacher/TeacherAnnouncements.tsx';
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+        <div className="flex items-center gap-2.5 text-indigo-600 font-bold text-sm bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-200">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          <span>Connecting to EduManage Portal...</span>
+        </div>
+      </div>
+    );
+  }
 
-// Student pages
-import { StudentDashboard } from './pages/student/StudentDashboard.tsx';
-import { StudentProfile } from './pages/student/StudentProfile.tsx';
-import { StudentAttendance } from './pages/student/StudentAttendance.tsx';
-import { StudentResults } from './pages/student/StudentResults.tsx';
-import { StudentFees } from './pages/student/StudentFees.tsx';
-import { StudentTimetable } from './pages/student/StudentTimetable.tsx';
-import { StudentAnnouncements } from './pages/student/StudentAnnouncements.tsx';
+  // If not logged in, show Auth screens
+  if (!user) {
+    if (authView === 'register') {
+      return <RegisterPage onSwitchToLogin={() => setAuthView('login')} />;
+    }
+    return <LoginPage onSwitchToRegister={() => setAuthView('register')} />;
+  }
+
+  const renderActivePage = () => {
+    switch (currentPage) {
+      case 'dashboard':
+        return <DashboardPage onNavigate={setCurrentPage} />;
+      case 'courses':
+        return <CoursesPage />;
+      case 'grades':
+        return <GradesPage />;
+      case 'attendance':
+        return <AttendancePage />;
+      case 'assignments':
+        return <AssignmentsPage />;
+      case 'announcements':
+        return <AnnouncementsPage />;
+      case 'profile':
+        return <ProfilePage />;
+      case 'diagnostics':
+        return <SystemDiagnosticsPage />;
+      default:
+        return <DashboardPage onNavigate={setCurrentPage} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900 font-sans antialiased selection:bg-indigo-500 selection:text-white">
+      <Navbar
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        onNavigate={setCurrentPage}
+      />
+
+      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+        <Sidebar
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+
+        <main className="flex-1 overflow-x-hidden min-w-0">
+          {renderActivePage()}
+        </main>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-
-          {/* Admin Protected Routes */}
-          <Route element={<AppLayout allowedRoles={['admin']} />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/students" element={<AdminStudents />} />
-            <Route path="/admin/teachers" element={<AdminTeachers />} />
-            <Route path="/admin/attendance" element={<AdminAttendance />} />
-            <Route path="/admin/exams" element={<AdminExams />} />
-            <Route path="/admin/marks" element={<AdminMarks />} />
-            <Route path="/admin/fees" element={<AdminFees />} />
-            <Route path="/admin/timetable" element={<AdminTimetable />} />
-            <Route path="/admin/announcements" element={<AdminAnnouncements />} />
-          </Route>
-
-          {/* Teacher Protected Routes */}
-          <Route element={<AppLayout allowedRoles={['teacher']} />}>
-            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-            <Route path="/teacher/students" element={<TeacherStudents />} />
-            <Route path="/teacher/attendance" element={<TeacherAttendance />} />
-            <Route path="/teacher/marks" element={<TeacherMarks />} />
-            <Route path="/teacher/timetable" element={<TeacherTimetable />} />
-            <Route path="/teacher/announcements" element={<TeacherAnnouncements />} />
-          </Route>
-
-          {/* Student Protected Routes */}
-          <Route element={<AppLayout allowedRoles={['student']} />}>
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/student/profile" element={<StudentProfile />} />
-            <Route path="/student/attendance" element={<StudentAttendance />} />
-            <Route path="/student/results" element={<StudentResults />} />
-            <Route path="/student/fees" element={<StudentFees />} />
-            <Route path="/student/timetable" element={<StudentTimetable />} />
-            <Route path="/student/announcements" element={<StudentAnnouncements />} />
-          </Route>
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }

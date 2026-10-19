@@ -1,236 +1,148 @@
-export type UserRole = 'admin' | 'teacher' | 'student';
-
 export interface User {
   id: number;
+  username: string;
   email: string;
-  role: UserRole;
-  name: string;
-  studentId?: number;
-  studentCode?: string;
-  teacherId?: number;
-  teacherCode?: string;
-  details?: any;
+  full_name: string;
+  role: 'student' | 'faculty' | 'admin';
+  student_id: string;
+  department: string;
+  semester: string;
+  phone?: string;
+  avatar_url?: string;
   created_at?: string;
-}
-
-export interface Department {
-  id: number;
-  name: string;
-  code: string;
-  description?: string;
 }
 
 export interface Course {
   id: number;
-  name: string;
   code: string;
-  department_id: number;
-  department_name?: string;
-  department_code?: string;
-  duration_years: number;
-  total_semesters: number;
-}
-
-export interface Subject {
-  id: number;
-  name: string;
-  code: string;
-  course_id: number;
-  course_name?: string;
-  course_code?: string;
-  semester: number;
+  title: string;
+  description: string;
   credits: number;
-  teacher_id?: number | null;
-  teacher_name?: string;
+  instructor: string;
+  department: string;
+  semester: string;
+  schedule: string;
+  room: string;
+  capacity: number;
+  color: string;
+  enrolled_count?: number;
+  is_enrolled?: boolean;
+  student_grade?: string | null;
+  student_score?: number | null;
 }
 
-export interface Teacher {
-  id: number;
-  teacher_id: string;
-  user_id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  department_id: number;
-  department_name?: string;
-  department_code?: string;
-  qualification: string;
-  designation: string;
-  joining_date: string;
-  address?: string;
-  subjects?: Subject[];
-  timetable?: TimetableEntry[];
-}
-
-export interface Student {
-  id: number;
-  student_id: string;
-  user_id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  dob: string;
-  gender: string;
-  address?: string;
-  department_id: number;
-  department_name?: string;
+export interface EnrolledCourse {
+  enrollment_id: number;
+  grade: string;
+  score: number;
+  enrollment_status: string;
   course_id: number;
-  course_name?: string;
-  course_code?: string;
-  semester: number;
-  admission_date: string;
-  profile_image?: string;
-  guardian_name?: string;
-  guardian_phone?: string;
-  status: string;
-  attendanceSummary?: {
-    totalClasses: number;
-    presentClasses: number;
-    absentClasses: number;
-    percentage: number;
-  };
-  marks?: MarksRecord[];
-  fees?: FeeRecord[];
+  code: string;
+  title: string;
+  credits: number;
+  instructor: string;
+  schedule: string;
+  room: string;
+  color: string;
+}
+
+export interface Assignment {
+  id: number;
+  title: string;
+  description: string;
+  due_date: string;
+  total_points: number;
+  weight_percent?: number;
+  course_id?: number;
+  course_code: string;
+  course_title: string;
+  course_color: string;
+  submission_id?: number | null;
+  file_name?: string | null;
+  content_text?: string | null;
+  submitted_at?: string | null;
+  grade?: number | null;
+  feedback?: string | null;
+  submission_status: 'Pending' | 'Submitted' | 'Graded';
 }
 
 export interface AttendanceRecord {
   id: number;
-  student_id: number;
-  student_name?: string;
-  student_code?: string;
-  subject_id: number;
-  subject_name?: string;
-  subject_code?: string;
   date: string;
-  status: 'Present' | 'Absent' | 'Late';
-  remarks?: string;
+  status: 'Present' | 'Absent' | 'Late' | 'Excused';
+  notes: string;
+  course_code: string;
+  course_title: string;
+  course_color: string;
 }
 
-export interface SubjectAttendanceSummary {
-  subjectId: number;
-  subjectName: string;
-  subjectCode: string;
-  totalClasses: number;
-  presentClasses: number;
-  absentClasses: number;
+export interface AttendanceSummaryItem {
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  total_classes: number;
+  present_count: number;
+  late_count: number;
+  absent_count: number;
   percentage: number;
-}
-
-export interface Exam {
-  id: number;
-  name: string;
-  subject_id: number;
-  subject_name?: string;
-  subject_code?: string;
-  course_id: number;
-  course_name?: string;
-  semester: number;
-  exam_date: string;
-  start_time: string;
-  end_time: string;
-  room: string;
-  max_marks: number;
-  passing_marks: number;
-}
-
-export interface MarksRecord {
-  id: number;
-  student_id: number;
-  student_name?: string;
-  student_code?: string;
-  exam_id: number;
-  exam_name?: string;
-  exam_date?: string;
-  subject_id: number;
-  subject_name?: string;
-  subject_code?: string;
-  semester?: number;
-  credits?: number;
-  marks_obtained: number;
-  max_marks: number;
-  grade: string;
-  remarks?: string;
-  created_at?: string;
-}
-
-export interface FeeRecord {
-  id: number;
-  student_id: number;
-  student_name?: string;
-  student_code?: string;
-  course_name?: string;
-  department_name?: string;
-  academic_year: string;
-  semester: number;
-  total_fee: number;
-  paid_amount: number;
-  remaining_amount: number;
-  due_date: string;
-  payment_status: 'Paid' | 'Partially Paid' | 'Pending';
-  payment_date?: string;
-  receipt_no?: string;
-  payment_method?: string;
-}
-
-export interface TimetableEntry {
-  id: number;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-  subject_id: number;
-  subject_name?: string;
-  subject_code?: string;
-  teacher_id?: number | null;
-  teacher_name?: string;
-  room: string;
-  course_id: number;
-  course_name?: string;
-  semester: number;
 }
 
 export interface Announcement {
   id: number;
   title: string;
-  description: string;
-  priority: 'Normal' | 'Important' | 'Urgent';
-  target_audience: 'All' | 'Students' | 'Teachers';
-  published_date: string;
-  author_name: string;
-  author_role: string;
-  is_active: boolean;
+  content: string;
+  author: string;
+  category: string;
+  priority: 'Urgent' | 'High' | 'Normal';
+  created_at: string;
 }
 
-export interface AdminStats {
-  totalStudents: number;
-  totalTeachers: number;
-  totalCourses: number;
-  totalSubjects: number;
-  totalAttendance: number;
-  pendingFeesCount: number;
-  pendingFeesAmount: number;
-  upcomingExamsCount: number;
-  recentAnnouncements: Announcement[];
+export interface NotificationItem {
+  id: number;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  is_read: boolean;
+  created_at: string;
 }
 
-export interface TeacherStats {
-  assignedStudentsCount: number;
-  todayClassesCount: number;
-  todayClasses: TimetableEntry[];
-  pendingAttendanceCount: number;
-  upcomingExams: Exam[];
-  recentAnnouncements: Announcement[];
-}
-
-export interface StudentStats {
-  attendance: {
-    totalClasses: number;
-    presentClasses: number;
-    absentClasses: number;
-    percentage: number;
+export interface DashboardData {
+  stats: {
+    gpa: string;
+    totalCredits: number;
+    enrolledCount: number;
+    attendanceRate: number;
+    assignmentsPending: number;
+    presentCount: number;
+    absentCount: number;
+    lateCount: number;
   };
-  upcomingExams: Exam[];
-  recentMarks: MarksRecord[];
-  feeRecord: FeeRecord | null;
-  todayClasses: TimetableEntry[];
-  latestAnnouncements: Announcement[];
+  enrolledCourses: EnrolledCourse[];
+  upcomingAssignments: Assignment[];
+  recentAnnouncements: Announcement[];
+  notifications: NotificationItem[];
+}
+
+export interface SystemStatus {
+  status: string;
+  database: {
+    engine: string;
+    mode: 'persistent' | 'in-memory';
+    status: string;
+    windowsCompatible: boolean;
+    dataDir: string;
+    tables: {
+      users: number;
+      courses: number;
+      enrollments: number;
+      assignments: number;
+      announcements: number;
+    };
+  };
+  environment: {
+    nodeVersion: string;
+    platform: string;
+    uptimeSeconds: number;
+    timestamp: string;
+  };
 }

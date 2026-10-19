@@ -1,9 +1,10 @@
 import express from 'express';
+import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import { initDb } from './src/server/db.ts';
-import { apiRouter } from './src/server/routes.ts';
+import apiRouter from './server/routes.js';
+import { initDatabase } from './server/db.js';
 
 dotenv.config();
 
@@ -12,43 +13,52 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = parseInt(process.env.PORT || '3000', 10);
+  const PORT = Number(process.env.PORT) || 3000;
 
-  // Parse JSON payloads
-  app.use(express.json());
+  console.log('----------------------------------------------------');
+  console.log(' EduManage - Student Management System Server');
+  console.log('----------------------------------------------------');
 
-  // Initialize PostgreSQL database and seeds
+  // Initialize PGlite database with Windows protection
   try {
-    await initDb();
-    console.log('EduManage PostgreSQL Database initialized successfully.');
-  } catch (err) {
-    console.error('Failed to initialize database:', err);
+    await initDatabase();
+    console.log('[Database] Ready to accept queries.');
+  } catch (dbErr: any) {
+    console.error('[Database Fatal Error]', dbErr?.message || dbErr);
   }
+
+  app.use(cors());
+  app.use(express.json({ limit: '10mb' }));
 
   // Mount API router
   app.use('/api', apiRouter);
 
-  // Vite middleware in dev or static files in production
-  if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
-    });
-  } else {
-    // In dev, dynamically import vite and mount middlewares
-    const { createServer } = await import('vite');
-    const vite = await createServer({
+  // In development or when dist doesn't exist, mount Vite dev server as middleware
+  const isProd = process.env.NODE_ENV === 'production';
+  if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
+    console.log('[Vite] Middleware mounted in development mode.');
+  } else {
+    const distPath = path.resolve(__dirname, 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (_req, res) => {
+      res.sendFile(path.resolve(distPath, 'index.html'));
+    });
+    console.log(`[Production] Serving static client build from: ${distPath}`);
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`EduManage Server is listening on http://0.0.0.0:${PORT}`);
+    console.log(`[EduManage] Application is live at: http://localhost:${PORT}`);
+    console.log('----------------------------------------------------');
   });
 }
 
 startServer().catch((err) => {
-  console.error('Fatal server startup error:', err);
+  console.error('[Server Fatal] Failed to start server:', err);
+  process.exit(1);
 });
